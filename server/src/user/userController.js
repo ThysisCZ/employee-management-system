@@ -1,12 +1,24 @@
 const userService = require('./userService');
 
 async function listUsersController(req, res) {
-    const employees = await userService.listUsersService();
-    res.send({ "status": true, "data": employees })
+    // Get managerId from authenticated token
+    const managerId = req.manager.id;
+
+    const employees = await userService.listUsersService(managerId);
+    res.send({ "status": true, "data": employees });
 }
 
 async function createUserController(req, res) {
-    const status = await userService.createUserService(req.body);
+    // Get managerId from authenticated token
+    const managerId = req.manager.id;
+
+    // Add managerId to the employee data
+    const userDetails = {
+        ...req.body,
+        managerId: managerId
+    };
+
+    const status = await userService.createUserService(userDetails);
 
     if (status) {
         res.send({ "status": true, "message": "User created successfully." });
@@ -17,14 +29,15 @@ async function createUserController(req, res) {
 
 async function getUserController(req, res) {
     try {
-        //get ID from URL
         const userId = req.params.id;
-        const user = await userService.getUserService(userId);
+        const managerId = req.manager.id;
+
+        const user = await userService.getUserService(userId, managerId);
 
         if (user) {
             res.status(200).send(user);
         } else {
-            res.status(404).send({ message: 'User not found.' });
+            res.status(404).send({ message: 'User not found or access denied.' });
         }
     } catch (e) {
         console.error(e);
@@ -34,17 +47,16 @@ async function getUserController(req, res) {
 
 async function updateUserController(req, res) {
     try {
-        //get ID from URL
         const userId = req.params.id;
-        //get user JSON body
+        const managerId = req.manager.id;
         const userBody = req.body;
 
-        const user = await userService.updateUserService(userId, userBody);
+        const user = await userService.updateUserService(userId, userBody, managerId);
 
         if (user) {
             res.send({ "status": true, "message": "User updated successfully.", "data": user });
         } else {
-            res.status(404).send({ message: 'User not found.' });
+            res.status(404).send({ message: 'User not found or access denied.' });
         }
     } catch (e) {
         console.error(e);
@@ -54,14 +66,15 @@ async function updateUserController(req, res) {
 
 async function deleteUserController(req, res) {
     try {
-        //get ID from URL
         const userId = req.params.id;
-        const user = await userService.deleteUserService(userId);
+        const managerId = req.manager.id;
+
+        const user = await userService.deleteUserService(userId, managerId);
 
         if (user) {
             res.send({ "status": true, "message": `User with ID '${userId}' deleted successfully.` });
         } else {
-            res.status(404).send({ message: 'User not found.' });
+            res.status(404).send({ message: 'User not found or access denied.' });
         }
     } catch (e) {
         console.error(e);

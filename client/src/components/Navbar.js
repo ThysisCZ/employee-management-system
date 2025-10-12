@@ -23,7 +23,7 @@ function Navbar() {
 
                 <div className={styles.navbarRight}>
                     <span className={styles.managerName}>
-                        Welcome, {manager.name}
+                        {manager.name}
                     </span>
                     <button onClick={handleLogout} className={styles.logoutBtn}>
                         Logout

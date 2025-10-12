@@ -2,13 +2,12 @@
 const userModel = require('./userModel');
 
 //communicate with the database
-module.exports.listUsersService = () => {
+module.exports.listUsersService = (managerId) => {
 
-    //check URL
     return new Promise((resolve, reject) => {
 
-        //return data
-        userModel.find({})
+        //return only employees belonging to this manager
+        userModel.find({ managerId: managerId })
             .then((result) => {
                 resolve(result);
             })
@@ -27,6 +26,7 @@ module.exports.createUserService = (userDetails) => {
         userModelData.name = userDetails.name;
         userModelData.address = userDetails.address;
         userModelData.phone = userDetails.phone;
+        userModelData.managerId = userDetails.managerId;
 
         userModelData.save()
             .then(() => {
@@ -34,15 +34,16 @@ module.exports.createUserService = (userDetails) => {
             })
             .catch(() => {
                 reject(false);
-            });;
+            });
     });
 }
 
-module.exports.getUserService = (id) => {
+module.exports.getUserService = (id, managerId) => {
 
     return new Promise((resolve, reject) => {
 
-        userModel.findOne({ _id: id })
+        // Find employee by ID AND verify it belongs to this manager
+        userModel.findOne({ _id: id, managerId: managerId })
             .then((result) => {
                 resolve(result);
             })
@@ -52,11 +53,16 @@ module.exports.getUserService = (id) => {
     });
 }
 
-module.exports.updateUserService = (id, userDetails) => {
+module.exports.updateUserService = (id, userDetails, managerId) => {
 
     return new Promise((resolve, reject) => {
 
-        userModel.findOneAndUpdate({ _id: id }, { $set: userDetails }, { new: true })
+        // Update only if employee belongs to this manager
+        userModel.findOneAndUpdate(
+            { _id: id, managerId: managerId },
+            { $set: userDetails },
+            { new: true }
+        )
             .then((result) => {
                 resolve(result);
             })
@@ -66,11 +72,12 @@ module.exports.updateUserService = (id, userDetails) => {
     });
 }
 
-module.exports.deleteUserService = (id) => {
+module.exports.deleteUserService = (id, managerId) => {
 
     return new Promise((resolve, reject) => {
 
-        userModel.findOneAndDelete({ _id: id })
+        // Delete only if employee belongs to this manager
+        userModel.findOneAndDelete({ _id: id, managerId: managerId })
             .then((result) => {
                 resolve(result);
             })

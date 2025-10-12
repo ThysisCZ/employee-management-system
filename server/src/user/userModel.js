@@ -1,24 +1,28 @@
-//dependencies
 const mongoose = require('mongoose');
 
-//schema library
-const Schema = mongoose.Schema;
-
-//initialize user schema
-const userSchema = new Schema({
+const userSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     address: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     phone: {
         type: String,
+        required: true,
+        trim: true
+    },
+    managerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Manager',
         required: true
     }
+}, {
+    timestamps: true
 });
 
-//export user model
-module.exports = mongoose.model('user', userSchema, 'employees');
+module.exports = mongoose.model('User', userSchema);
