@@ -1,0 +1,14 @@
+.profileContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 16px;
+    padding: 10px;
+}
+
+.profileField {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    box-shadow: 0 1px 10px rgba(0, 0, 0, 0.1);
+}

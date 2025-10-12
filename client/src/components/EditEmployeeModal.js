@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Form, Button, Modal, Stack } from 'react-bootstrap';
 import styles from '../css/addEmployeeModal.module.css';
 
-function AddEmployeeModal({ show, setAddEmployeeShow, onEmployeeAdded, token }) {
+function EditEmployeeModal({ show, setEditEmployeeShow, onEmployeeEdited, token, employee }) {
     const defaultForm = {
         name: '',
         address: '',
@@ -13,8 +13,19 @@ function AddEmployeeModal({ show, setAddEmployeeShow, onEmployeeAdded, token }) 
 
     const [formData, setFormData] = useState(defaultForm);
     const [validated, setValidated] = useState(false);
-    const [createCall, setCreateCall] = useState({ state: "inactive" });
+    const [editCall, setEditCall] = useState({ state: "inactive" });
     const [message, setMessage] = useState({ type: '', text: '' });
+
+    useEffect(() => {
+        // Pre-fill form when modal opens
+        if (employee && show) {
+            setFormData({
+                name: employee.name || '',
+                address: employee.address || '',
+                phone: employee.phone || ''
+            });
+        }
+    }, [employee, show]);
 
     const setField = (name, val) => {
         setFormData((formData) => ({ ...formData, [name]: val }));
@@ -23,7 +34,8 @@ function AddEmployeeModal({ show, setAddEmployeeShow, onEmployeeAdded, token }) 
     const handleClose = () => {
         setFormData(defaultForm);
         setValidated(false);
-        setAddEmployeeShow(false)
+        setMessage({ type: '', text: '' });
+        setEditEmployeeShow(false);
     };
 
     const handleSubmit = async (e) => {
@@ -34,11 +46,11 @@ function AddEmployeeModal({ show, setAddEmployeeShow, onEmployeeAdded, token }) 
         if (!e.target.checkValidity()) return;
 
         try {
-            setCreateCall({ state: "pending" });
+            setEditCall({ state: "pending" });
             setMessage({ type: '', text: '' });
 
-            const response = await fetch(`${URI}/user/create`, {
-                method: 'POST',
+            const response = await fetch(`${URI}/user/update/${employee._id}`, {
+                method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -49,26 +61,20 @@ function AddEmployeeModal({ show, setAddEmployeeShow, onEmployeeAdded, token }) 
             const data = await response.json();
 
             if (response.ok) {
-                setCreateCall({ state: "success" });
-                setMessage({ type: 'success', text: 'Employee added successfully!' });
+                setEditCall({ state: "success" });
+                setMessage({ type: 'success', text: 'Employee updated successfully!' });
 
-                // Clear form
-                setFormData(defaultForm);
-                setValidated(false);
-
-                // Notify parent component to refresh list
                 setTimeout(() => {
-                    onEmployeeAdded();
-                    setMessage({ type: '', text: '' });
-                    setCreateCall({ state: "inactive" });
-                }, 1500);
+                    onEmployeeEdited(); // refresh list
+                    handleClose();
+                }, 1000);
             } else {
-                setCreateCall({ state: "error", error: data.message });
-                setMessage({ type: 'error', text: data.message || 'Failed to add employee' });
+                setEditCall({ state: "error", error: data.message });
+                setMessage({ type: 'error', text: data.message || 'Failed to update employee' });
             }
         } catch (e) {
-            console.error('Create employee error:', e);
-            setCreateCall({ state: "error", error: e });
+            console.error('Edit employee error:', e);
+            setEditCall({ state: "error", error: e });
             setMessage({ type: 'error', text: 'Network error. Please try again.' });
         }
     };
@@ -76,7 +82,7 @@ function AddEmployeeModal({ show, setAddEmployeeShow, onEmployeeAdded, token }) 
     return (
         <Modal show={show} onHide={handleClose} centered>
             <Modal.Header closeButton>
-                <Modal.Title>Add Employee</Modal.Title>
+                <Modal.Title>Edit Employee</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 {message.text && (
@@ -95,7 +101,6 @@ function AddEmployeeModal({ show, setAddEmployeeShow, onEmployeeAdded, token }) 
                                 onChange={(e) => setField("name", e.target.value)}
                                 maxLength={50}
                                 required
-                                isInvalid={validated && formData.name.length === 0}
                             />
                             <Form.Control.Feedback type="invalid">
                                 This field is required.
@@ -110,7 +115,6 @@ function AddEmployeeModal({ show, setAddEmployeeShow, onEmployeeAdded, token }) 
                                 onChange={(e) => setField("address", e.target.value)}
                                 maxLength={100}
                                 required
-                                isInvalid={validated && formData.address.length === 0}
                             />
                             <Form.Control.Feedback type="invalid">
                                 This field is required.
@@ -125,7 +129,6 @@ function AddEmployeeModal({ show, setAddEmployeeShow, onEmployeeAdded, token }) 
                                 onChange={(e) => setField("phone", e.target.value)}
                                 maxLength={20}
                                 required
-                                isInvalid={validated && formData.phone.length === 0}
                             />
                             <Form.Control.Feedback type="invalid">
                                 This field is required.
@@ -137,16 +140,16 @@ function AddEmployeeModal({ show, setAddEmployeeShow, onEmployeeAdded, token }) 
                         <Button
                             variant="secondary"
                             onClick={handleClose}
-                            disabled={createCall.state === "pending"}
+                            disabled={editCall.state === "pending"}
                         >
                             Cancel
                         </Button>
                         <Button
                             variant="primary"
                             type="submit"
-                            disabled={createCall.state === "pending"}
+                            disabled={editCall.state === "pending"}
                         >
-                            {createCall.state === "pending" ? "Loading..." : "Submit"}
+                            {editCall.state === "pending" ? "Saving..." : "Save"}
                         </Button>
                     </div>
                 </Form>
@@ -155,4 +158,4 @@ function AddEmployeeModal({ show, setAddEmployeeShow, onEmployeeAdded, token }) 
     );
 }
 
-export default AddEmployeeModal;
+export default EditEmployeeModal;
